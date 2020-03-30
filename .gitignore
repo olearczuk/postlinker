@@ -1,0 +1,11 @@
+.idea
+tests/exec_def
+tests/exec_call
+tests/exec_noop
+tests/exec_ro
+tests/exec_rw
+tests/exec_static
+tests/exec_syscall
+tests/exec_syscall2
+tests/exec_var
+__pycache__/
