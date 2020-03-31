@@ -1,29 +1,14 @@
-from pwnlib.elf.elf import *
-from utils import *
-import shutil
+from elf_manipulator import *
 
-shutil.copyfile("z1-example/exec-orig", "tmp")
-elf = ELF("tmp")
-elf.stream = open("tmp", "r+b")
+if __name__ == "__main__":
+    exec_file = "z1-example/exec-orig"
+    rel_file = "z1-example/rel.o"
+    exec_output = "tmp"
 
-# changing segment offset to 0x2137
-segment_num = 2
-segment = elf.segments[segment_num]
-segment.header["p_offset"] = 0x2137
-segment_offset = elf._segment_offset(segment_num)
-elf.stream.seek(segment_offset)
-elf.stream.write(generate_phdr_string(elf, segment))
+    elf_manipulator = ElfManipulator(exec_file, exec_output)
 
-# changing start address to 0x2137
-elf.header["e_entry"] = 0x2137
-elf.stream.seek(0)
-elf.stream.write(generate_edhr_string(elf))
-elf.stream.seek(segment_offset)
+    elf_manipulator.update_segments_offsets()
+    elf_manipulator.update_sections_offsets()
 
-# changing section offset to 0x2137
-section_num = 1
-section = elf.sections[section_num]
-section.header["sh_offset"] = 0x2137
-section_offset = elf._section_offset(section_num)
-elf.stream.seek(section_offset)
-elf.stream.write(generate_shdr_string(elf, section))
+    segment = elf_manipulator.elf.get_segment(1)
+    elf_manipulator.add_new_segment(segment)

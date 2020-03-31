@@ -2,12 +2,12 @@ from io import SEEK_END
 from elftools.elf.enums import *
 
 
-def generate_phdr_string(elf, segment):
+def write_segment(elf, segment, segment_index):
     """
-    generate_phdr_string generates bytes representation of given segment.
+    write_segment generates bytes representation of given segment.
     :param elf:
     :param segment:
-    :return:
+    :param segment_index:
     """
     p_type_dict = ENUM_P_TYPE_BASE
     if elf["e_machine"] == 'EM_ARM':
@@ -21,14 +21,16 @@ def generate_phdr_string(elf, segment):
     header_keys = list(segment.header)
     for i, key in enumerate(header_keys[1:]):
         s += elf.structs.Elf_Phdr.subcons[i+1].packer.pack(segment.header[key])
-    return s
+
+    offset = elf._segment_offset(segment_index)
+    elf.stream.seek(offset)
+    elf.stream.write(s)
 
 
-def generate_edhr_string(elf):
+def write_elf_header(elf):
     """
-    generate_edhr_string generates bytes representation of given ELF header.
+    write_elf_header generates bytes representation of given ELF header.
     :param elf:
-    :return:
     """
     e_ident_struct = elf.structs.Elf_Ehdr.subcons[0]
     e_ident_dict = elf["e_ident"]
@@ -49,15 +51,16 @@ def generate_edhr_string(elf):
     header_keys = list(elf.header)
     for i, key in enumerate(header_keys[4:]):
         s += elf.structs.Elf_Ehdr.subcons[i+4].packer.pack(elf.header[key])
-    return s
+    elf.stream.seek(0)
+    elf.stream.write(s)
 
 
-def generate_shdr_string(elf, section):
+def write_section(elf, section, section_index):
     """
-    generate_shdr_string generates bytes representation of given section.
+    write_section generates bytes representation of given section.
     :param elf:
     :param section:
-    :return:
+    :param section_index:
     """
     sh_type_dict = ENUM_SH_TYPE_BASE
     if elf["e_machine"] == 'EM_ARM':
@@ -73,29 +76,29 @@ def generate_shdr_string(elf, section):
     header_keys = list(section.header)
     for i, key in enumerate(header_keys[2:]):
         s += elf.structs.Elf_Shdr.subcons[i + 2].packer.pack(section.header[key])
-    return s
+
+    offset = elf._section_offset(section_index)
+    elf.stream.seek(offset)
+    elf.stream.write(s)
 
 
-def make_gap(elf, offset, size):
+def make_gap(stream, offset, size):
     """
     make_gap moves creates new space for writing, pushing current content aside.
-    TODO - currently offsets are not fixed after creating the gap
-    :param elf:
+    :param stream:
     :param offset:
     :param size:
-    :return:
     """
-    elf.stream.seek(offset)
-    content = elf.stream.read()
+    stream.seek(offset)
+    content = stream.read()
 
-    elf.stream.seek(0, SEEK_END)
-    pos = elf.stream.tell()
-    print(pos)
-    elf.stream.truncate(pos + size)
+    stream.seek(0, SEEK_END)
+    pos = stream.tell()
+    stream.truncate(pos + size)
 
-    elf.stream.seek(offset+size)
-    elf.stream.write(content)
+    stream.seek(offset + size)
+    stream.write(content)
 
     gap = bytes(size)
-    elf.stream.seek(offset)
-    elf.stream.write(gap)
+    stream.seek(offset)
+    stream.write(gap)
