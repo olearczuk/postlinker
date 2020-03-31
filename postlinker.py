@@ -12,3 +12,4 @@ if __name__ == "__main__":
 
     segment = elf_manipulator.elf.get_segment(1)
     elf_manipulator.add_new_segment(segment)
+    elf_manipulator.add_new_segment(segment)

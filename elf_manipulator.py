@@ -19,7 +19,6 @@ class ElfManipulator:
                 segment.header["p_paddr"] -= PAGE_SIZE
                 if i == 2:
                     self.update_elf_header()
-                    self.update_phdr_segment()
                     segment.header["p_filesz"] += PAGE_SIZE
                     segment.header["p_memsz"] += PAGE_SIZE
             else:
@@ -46,5 +45,6 @@ class ElfManipulator:
 
     def add_new_segment(self, segment):
         write_segment(self.elf, segment, self.elf.num_segments())
+        self.update_phdr_segment()
         self.elf.header["e_phnum"] += 1
         write_elf_header(self.elf)
