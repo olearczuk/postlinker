@@ -92,9 +92,7 @@ def make_gap(stream, offset, size):
     stream.seek(offset)
     content = stream.read()
 
-    stream.seek(0, SEEK_END)
-    pos = stream.tell()
-    stream.truncate(pos + size)
+    expand_stream(stream, size)
 
     stream.seek(offset + size)
     stream.write(content)
@@ -102,3 +100,14 @@ def make_gap(stream, offset, size):
     gap = bytes(size)
     stream.seek(offset)
     stream.write(gap)
+
+
+def expand_stream(stream, size):
+    stream_size = get_stream_size(stream)
+    stream.truncate(stream_size + size)
+
+
+def get_stream_size(stream):
+    stream.seek(0, SEEK_END)
+    return stream.tell()
+

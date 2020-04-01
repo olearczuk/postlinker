@@ -1,15 +1,25 @@
+#!/usr/bin/python3
 from elf_manipulator import *
+import sys
+import os
 
-if __name__ == "__main__":
-    exec_file = "z1-example/exec-orig"
-    rel_file = "z1-example/rel.o"
-    exec_output = "tmp"
+if len(sys.argv) < 4:
+    print("usage: ./postlinker ET_EXEC> <ET_REL> <output ET_EXEC>")
+    exit(1)
+exec_file = sys.argv[1]
+rel_file = sys.argv[2]
+exec_output = sys.argv[3]
 
-    elf_manipulator = ElfManipulator(exec_file, exec_output)
+exec_manipulator = ElfManipulator(exec_file, rel_file, exec_output)
 
-    elf_manipulator.update_segments_offsets()
-    elf_manipulator.update_sections_offsets()
+exec_manipulator.update_segments_offsets()
+exec_manipulator.update_sections_offsets()
 
-    segment = elf_manipulator.elf.get_segment(1)
-    elf_manipulator.add_new_segment(segment)
-    elf_manipulator.add_new_segment(segment)
+exec_manipulator.fetch_rel_sections()
+
+exec_manipulator.combine_sections(exec_manipulator.write_sections, PF_WRITE + PF_READ)
+exec_manipulator.combine_sections(exec_manipulator.exec_write_sections, PF_EXECUTE + PF_WRITE + PF_READ)
+exec_manipulator.combine_sections(exec_manipulator.other_sections, PF_READ)
+exec_manipulator.combine_sections(exec_manipulator.exec_sections, PF_EXECUTE + PF_READ)
+
+os.system("chmod u+x " + exec_output)
