@@ -12,6 +12,4 @@ _start:
 	movq $(msg_end - msg), %rdx
 	syscall
 	popq %rdx
-	movq $60, %rax
-    xor %rdi, %rdi
-    syscall
+	jmp orig_start

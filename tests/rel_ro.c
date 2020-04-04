@@ -1,6 +1,6 @@
-void do_write(const char *str);
+void do_write(char *str);
 
-const char *init = "Hello world\n";
+char *init = "Hello world\n";
 void f() {
 	do_write(init);
 }

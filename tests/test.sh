@@ -1,7 +1,7 @@
 #!/bin/bash
 make
 
-PROG=${PROG:=./postlinker}
+PROG=${PROG:=../postlinker.py}
 for tst in syscall syscall2 call noop rw ro def var static; do
 	echo === Test $tst ===
 	${PROG} exec_${tst} rel_${tst}.o patched_${tst} 2>&1 > /dev/null

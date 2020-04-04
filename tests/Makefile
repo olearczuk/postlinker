@@ -16,4 +16,4 @@ rel_static.o: rel_var.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OUTS)
+	rm -f $(OUTS) patched* tmp tmp2
