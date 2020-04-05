@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-void do_write(char *str) {
+void do_write(const char *str) {
 	printf("%s", str);
 }
 

@@ -29,11 +29,12 @@ class RelReader:
         return sections
 
     def get_relocations(self):
-        reladyn_name = '.rela.text'
-        reladyn = self.rel_elf.get_section_by_name(reladyn_name)
-        if not isinstance(reladyn, RelocationSection):
-            return []
-        return reladyn.iter_relocations()
+        relocations = []
+        for section in self.rel_elf.iter_sections():
+            if isinstance(section, RelocationSection):
+                for relocation in section.iter_relocations():
+                    relocations.append((section.name[5:], relocation))
+        return relocations
 
     def get_stream_content(self, offset, size):
         self.rel_elf.stream.seek(offset)

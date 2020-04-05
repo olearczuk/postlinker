@@ -9,5 +9,7 @@ tests/exec_syscall
 tests/exec_syscall2
 tests/exec_var
 tests/*.o
+tests/patched*
+tests/tmp*
 z1-example/*.o
 __pycache__/

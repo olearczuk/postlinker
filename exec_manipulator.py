@@ -37,7 +37,6 @@ class ExecManipulator:
             else:
                 segment.header["p_offset"] += PAGE_SIZE
 
-            print(segment.header)
             write_segment(self.exec_elf, segment, i)
         make_gap(self.exec_elf.stream, self.exec_elf._segment_offset(self.exec_elf.num_segments()), PAGE_SIZE)
         self.exec_elf.header["e_shoff"] += PAGE_SIZE
@@ -117,12 +116,12 @@ class ExecManipulator:
         write_elf_header(self.exec_elf)
 
     def _set_relocations(self):
-        rel_text_section_offset = self.rel_sections_offsets_dict[".text"]
         formatter32 = SLInt32("")
-        formatter64 = ULInt64("")
+        formatter64 = SLInt64("")
         exec_symbol_table = self.exec_elf.get_section_by_name(".symtab")
 
-        for reloc in self.rel_reader.get_relocations():
+        for (section_name, reloc) in self.rel_reader.get_relocations():
+            reloc_section_offset = self.rel_sections_offsets_dict[section_name]
             symbol = self.rel_reader.get_symbol(reloc["r_info_sym"])
             if is_symbol_extern(symbol):
                 if symbol.name == "orig_start":
@@ -141,7 +140,7 @@ class ExecManipulator:
                     symbol_offset = section_offset + self.rel_reader.get_symbol_offset(symbol.name)
                 symbol_address = symbol_offset + self._get_base_address()
 
-            instr_address = rel_text_section_offset + reloc["r_offset"] + self._get_base_address()
+            instr_address = reloc_section_offset + reloc["r_offset"] + self._get_base_address()
             self.exec_elf.stream.seek(instr_address - self._get_base_address())
             addend = reloc["r_addend"]
 
@@ -151,6 +150,6 @@ class ExecManipulator:
             elif reloc["r_info_type"] in [ENUM_RELOC_TYPE_x64['R_X86_64_32'], ENUM_RELOC_TYPE_x64['R_X86_64_32S']]:
                 rel_a_address = symbol_address + addend
                 self.exec_elf.stream.write(formatter32.packer.pack(rel_a_address))
-            elif reloc["r_inf_type"] == ENUM_RELOC_TYPE_x64['R_X86_64_64']:
+            elif reloc["r_info_type"] == ENUM_RELOC_TYPE_x64['R_X86_64_64']:
                 rel_a_address = symbol_address + addend
                 self.exec_elf.stream.write(formatter64.packer.pack(rel_a_address))
