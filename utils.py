@@ -4,17 +4,14 @@ from elftools.elf.enums import *
 
 def write_segment(elf, segment, segment_index):
     """
-    write_segment generates bytes representation of given segment.
-    :param elf:
-    :param segment:
-    :param segment_index:
+    write_segment generates bytes representation of given segment and overwrites it in the stream
     """
     p_type_dict = ENUM_P_TYPE_BASE
-    if elf["e_machine"] == 'EM_ARM':
+    if elf["e_machine"] == "EM_ARM":
         p_type_dict = ENUM_P_TYPE_ARM
-    elif elf["e_machine"] == 'EM_AARCH64':
+    elif elf["e_machine"] == "EM_AARCH64":
         p_type_dict = ENUM_P_TYPE_AARCH64
-    elif elf["e_machine"] == 'EM_MIPS':
+    elif elf["e_machine"] == "EM_MIPS":
         p_type_dict = ENUM_P_TYPE_MIPS
 
     s = elf.structs.Elf_Phdr.subcons[0].subcon.packer.pack(p_type_dict[segment.header["p_type"]])
@@ -29,8 +26,7 @@ def write_segment(elf, segment, segment_index):
 
 def write_elf_header(elf):
     """
-    write_elf_header generates bytes representation of given ELF header.
-    :param elf:
+    write_elf_header generates bytes representation of given ELF header and overwrites it in the stream
     """
     e_ident_struct = elf.structs.Elf_Ehdr.subcons[0]
     e_ident_dict = elf["e_ident"]
@@ -57,17 +53,14 @@ def write_elf_header(elf):
 
 def write_section(elf, section, section_index):
     """
-    write_section generates bytes representation of given section.
-    :param elf:
-    :param section:
-    :param section_index:
+    write_section generates bytes representation of given section and overwrites it in the stream.
     """
     sh_type_dict = ENUM_SH_TYPE_BASE
-    if elf["e_machine"] == 'EM_ARM':
+    if elf["e_machine"] == "EM_ARM":
         sh_type_dict = ENUM_SH_TYPE_ARM
-    elif elf["e_machine"] == 'EM_X86_64':
+    elif elf["e_machine"] == "EM_X86_64":
         sh_type_dict = ENUM_SH_TYPE_AMD64
-    elif elf["e_machine"] == 'EM_MIPS':
+    elif elf["e_machine"] == "EM_MIPS":
         sh_type_dict = ENUM_SH_TYPE_MIPS
 
     s = elf.structs.Elf_Shdr.subcons[0].packer.pack(section.header["sh_name"])
@@ -84,10 +77,7 @@ def write_section(elf, section, section_index):
 
 def make_gap(stream, offset, size):
     """
-    make_gap moves creates new space for writing, pushing current content aside.
-    :param stream:
-    :param offset:
-    :param size:
+    make_gap moves reserves space in stream, pushing current content aside.
     """
     stream.seek(offset)
     content = stream.read()
@@ -110,4 +100,8 @@ def expand_stream(stream, size):
 def get_stream_size(stream):
     stream.seek(0, SEEK_END)
     return stream.tell()
+
+
+def is_symbol_external(symbol):
+    return symbol["st_shndx"] == "SHN_UNDEF"
 

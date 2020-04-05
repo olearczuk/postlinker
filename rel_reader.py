@@ -6,18 +6,20 @@ SHF_WRITE = 0x1
 SHF_EXECINSTR = 0x4
 
 
-def is_symbol_extern(symbol):
-    return symbol["st_shndx"] == "SHN_UNDEF"
-
-
 class RelReader:
     def __init__(self, rel_name):
         self.rel_elf = ELFFile(open(rel_name, "rb"))
         self.rel_symbol_table = self.rel_elf.get_section_by_name(".symtab")
 
+    def __del__(self):
+        self.rel_elf.stream.close()
+
     def fetch_rel_sections(self, expected_flags):
+        """
+        fetch_rel_sections returns SHF_ALLOC sections that satisfy given expected flag and are not empty.
+        :param expected_flags: combination of SHF_WRITE and SHF_EXECINSTR
+        """
         sections = []
-        section_index = 0
         for section in self.rel_elf.iter_sections():
             flags = section.header["sh_flags"]
             section_size = section.header["sh_size"]
@@ -25,10 +27,12 @@ class RelReader:
                 cur_flags = flags & (SHF_WRITE + SHF_EXECINSTR)
                 if cur_flags == expected_flags:
                     sections.append(section)
-            section_index += 1
         return sections
 
     def get_relocations(self):
+        """
+        get_relocations returns list of pairs (relocation's section name, relocation).
+        """
         relocations = []
         for section in self.rel_elf.iter_sections():
             if isinstance(section, RelocationSection):
@@ -37,6 +41,11 @@ class RelReader:
         return relocations
 
     def get_stream_content(self, offset, size):
+        """
+        returns content of stream based on offset and size.
+        :param offset: beginning of content
+        :param size:   content size
+        """
         self.rel_elf.stream.seek(offset)
         return self.rel_elf.stream.read(size)
 
@@ -47,8 +56,11 @@ class RelReader:
         return self.rel_elf.get_section(index).name
 
     def get_symbol_offset(self, symbol_name):
+        """
+        get_symbol_offset returns given symbol offset or None, if such symbol does not exist.
+        """
         symbols = self.rel_symbol_table.get_symbol_by_name(symbol_name)
         if symbols is None:
-            return -1
+            return None
         symbol = symbols[0]
         return symbol["st_value"]
