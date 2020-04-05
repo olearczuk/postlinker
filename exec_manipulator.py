@@ -22,20 +22,26 @@ class ExecManipulator:
         self.rel_sections_offsets_dict = dict()
 
     def update_segments_offsets(self):
+        first_segment = self.exec_elf.get_segment(0)
+        if first_segment.header["p_type"] == "PT_PHDR":
+            segment_table_size = first_segment["p_filesz"]
+        else:
+            segment_table_size = self.exec_elf._segment_offset(self.exec_elf.num_segments())
         for (i, segment) in enumerate(self.exec_elf.segments):
-            if i == 0 or i == 2:
-                segment.header["p_vaddr"] -= PAGE_SIZE
-                segment.header["p_paddr"] -= PAGE_SIZE
-                if i == 2:
-                    make_gap(self.exec_elf.stream,
-                             self.exec_elf._segment_offset(self.exec_elf.num_segments()), PAGE_SIZE)
-                    self.exec_elf.header["e_shoff"] += PAGE_SIZE
-                    write_elf_header(self.exec_elf)
+            if segment["p_offset"] < segment_table_size:
+                segment.header["p_vaddr"] = max(segment.header["p_vaddr"] - PAGE_SIZE, 0)
+                segment.header["p_paddr"] = max(segment.header["p_paddr"] - PAGE_SIZE, 0)
+                if segment["p_type"] == "PT_LOAD":
                     segment.header["p_filesz"] += PAGE_SIZE
                     segment.header["p_memsz"] += PAGE_SIZE
             else:
                 segment.header["p_offset"] += PAGE_SIZE
+
+            print(segment.header)
             write_segment(self.exec_elf, segment, i)
+        make_gap(self.exec_elf.stream, self.exec_elf._segment_offset(self.exec_elf.num_segments()), PAGE_SIZE)
+        self.exec_elf.header["e_shoff"] += PAGE_SIZE
+        write_elf_header(self.exec_elf)
 
     def update_sections_offsets(self):
         for (i, section) in enumerate(self.exec_elf.sections):
