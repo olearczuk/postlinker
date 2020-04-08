@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 from exec_manipulator import ExecManipulator
 import sys
 from os import system
