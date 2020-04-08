@@ -100,6 +100,8 @@ class ExecManipulator:
         :param sections:      sections to be combined
         :param segment_flags: permissions of segment that is being created
         """
+        if len(sections) == 0:
+            return
         # aligning segment address
         self._align_stream(PAGE_SIZE)
         segment_offset = get_stream_size(self.exec_elf.stream)
@@ -119,7 +121,6 @@ class ExecManipulator:
             # writing section content
             self.exec_elf.stream.seek(get_stream_size(self.exec_elf.stream) - section_size)
             self.exec_elf.stream.write(section_content)
-
         segment_headers = dict({
             "p_type": LOAD_SEGMENT,
             "p_flags": segment_flags,
@@ -158,9 +159,9 @@ class ExecManipulator:
         """
         align_stream expands stream so it satisfies given alignment.
         """
-        alignment = (self._get_base_address() + get_stream_size(self.exec_elf.stream)) % alignment
-        if alignment != 0:
-            expand_stream(self.exec_elf.stream, PAGE_SIZE - alignment)
+        remainder = (self._get_base_address() + get_stream_size(self.exec_elf.stream)) % alignment
+        if remainder != 0:
+            expand_stream(self.exec_elf.stream, alignment - remainder)
 
     def _set_relocations(self):
         """
